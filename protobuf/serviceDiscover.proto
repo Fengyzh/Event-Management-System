@@ -1,0 +1,49 @@
+syntax = 'proto3';
+
+package servicediscovery;
+
+option go_package = "../servicediscovery";
+
+service DiscoveryService {
+    rpc RegisterService (Service) returns (ServiceResponse) {}
+    rpc GetAllService (Empty) returns (ServiceResponseList) {}
+    rpc HealthCheck (Empty) returns (ServiceHealthCheck) {}
+    rpc HealthCheckOnSerice (ServiceID) returns (ServiceHealthCheck) {}
+    rpc RemoveService (ServiceID) returns (ServiceResponse) {}
+}
+
+message Empty {}
+
+message ServiceID {
+    int32 id = 1;
+}
+
+message ServiceResponseList {
+    repeated Service response = 1;
+}
+
+message ServiceHealthCheckList {
+    repeated ServiceHealthCheck servicesHealth = 1;
+}
+
+message ServiceHealthCheck {
+    int32 id = 1;
+    string name =  2;
+    string addr = 3;
+    bool status =  4;
+    string message = 5;
+}
+
+
+message Service {
+    int32 id = 1;
+    string addr = 2;
+    string name = 3;
+    bool available = 4;
+    repeated string flag = 5;
+}
+
+message ServiceResponse {
+    string message = 1;
+    int32 status = 2;
+}
