@@ -1,0 +1,48 @@
+syntax = 'proto3';
+
+package eventservice;
+
+option go_package = "../grpc/eventservice";
+
+service DiscoveryService {
+    rpc CreateEvent (EventCreateRequest) returns (TicketOrderResponse) {}
+    rpc GetAllEvents (Empty) returns (EventList) {}
+    rpc GetEvent (EventId) returns (Event) {}
+    rpc UpdateEvent (EventCreateRequest) repeated (EventResponse) {}
+    rpc DeleteEvent (EventId) returns (EventResponse) {}
+}
+
+message Empty {}
+
+message EventId {
+    int32 eventid = 1;
+}
+
+message EventCreateRequest {
+    string location = 1;
+    int32 ticketamount = 2;
+    repeated string date = 3;
+    repeated string seats = 4;
+    string name = 5;
+}
+
+message EventResponse {
+    int32 eventid = 1;
+    string message = 2;
+}
+
+message EventList {
+    repeated Event Events
+}
+
+message Event {
+    int32 eventid = 1;
+    string location = 2;
+    int32 ticketamount = 3;
+    repeated string date = 4;
+    repeated string seats = 5;
+    string name = 6;
+}
+
+
+

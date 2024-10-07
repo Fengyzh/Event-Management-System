@@ -1,0 +1,48 @@
+syntax = 'proto3';
+
+package ticketservice;
+
+option go_package = "../grpc/ticketservice";
+
+service DiscoveryService {
+    rpc OrderTicket (TicketOrderRequest) returns (TicketOrderResponse) {}
+    rpc GetAllTickets (Empty) returns (TicketList) {}
+    rpc GetTicket (TicketId) returns (TicketOrder) {}
+    rpc UpdateTicket (TicketOrderRequest) returns (TicketOrderResponse) {}
+    rpc DeleteTicket (TicketId) returns (TicketOrderResponse) {}
+}
+
+message Empty {}
+
+
+message TicketList {
+    repeated TicketOrder tickets
+}
+
+message TicketId {
+    int32 ticketid = 1;
+}
+
+message TicketOrder {
+    int32 eventid = 1;
+    int32 amount = 2;
+    string location = 3;
+    repeated string date = 4;
+    string seat = 5;
+    boolean fulfilled = 6;
+    int32 ticketid = 7;
+}
+
+
+message TicketOrderRequest {
+    int32 eventid = 1;
+    int32 amount = 2;
+    string location = 3;
+    string date = 4;
+    string seat = 5;
+}
+
+message TicketOrderResponse {
+    int32 ticketid = 1;
+    int32 eventid = 2;
+}

@@ -35,6 +35,7 @@ func (lb *LoadBalancer) pickService() (*dspb.Service, error) {
 	services, err := c.GetAllService(context.Background(), nil)
 	if err != nil {
 		log.Printf("Failed to check service health")
+		
 	}
 
 	lb.CurrentIndex += 1
