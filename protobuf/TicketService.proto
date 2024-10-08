@@ -4,7 +4,7 @@ package ticketservice;
 
 option go_package = "../grpc/ticketservice";
 
-service DiscoveryService {
+service TicketService {
     rpc OrderTicket (TicketOrderRequest) returns (TicketOrderResponse) {}
     rpc GetAllTickets (Empty) returns (TicketList) {}
     rpc GetTicket (TicketId) returns (TicketOrder) {}

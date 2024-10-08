@@ -4,11 +4,11 @@ package eventservice;
 
 option go_package = "../grpc/eventservice";
 
-service DiscoveryService {
-    rpc CreateEvent (EventCreateRequest) returns (TicketOrderResponse) {}
+service EventService {
+    rpc CreateEvent (EventCreateRequest) returns (EventResponse) {}
     rpc GetAllEvents (Empty) returns (EventList) {}
     rpc GetEvent (EventId) returns (Event) {}
-    rpc UpdateEvent (EventCreateRequest) repeated (EventResponse) {}
+    rpc UpdateEvent (EventCreateRequest) returns (EventResponse) {}
     rpc DeleteEvent (EventId) returns (EventResponse) {}
 }
 
@@ -32,7 +32,7 @@ message EventResponse {
 }
 
 message EventList {
-    repeated Event Events
+    repeated Event Events = 1;
 }
 
 message Event {
