@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	espb "go-lb/grpc/eventservice"
 	dspb "go-lb/servicediscovery"
 	"io"
 	"log"
@@ -20,6 +22,24 @@ type LoadBalancer struct {
 	CurrentIndex int
 }
 
+type EventJSON struct {
+	Name         string   `json:"name"`
+	Location     string   `json:"location"`
+	Ticketamount int32    `json:"ticketamount"`
+	Date         []string `json:"date"`
+	Seats        []string `json:"seats"`
+}
+
+func (lb *LoadBalancer) GrpctoHTTP(grpcRes any) []byte { 
+	jsonres, err := json.Marshal(grpcRes)
+	if err != nil {
+		log.Fatalf("error while calling gRPC service: %v", err)
+	}
+	
+	return jsonres
+}
+
+
 func (lb *LoadBalancer) pickService() (*dspb.Service, error) {
 
 	lb.mu.Lock()
@@ -35,7 +55,7 @@ func (lb *LoadBalancer) pickService() (*dspb.Service, error) {
 	services, err := c.GetAllService(context.Background(), nil)
 	if err != nil {
 		log.Printf("Failed to check service health")
-		
+
 	}
 
 	lb.CurrentIndex += 1
@@ -50,6 +70,7 @@ func (lb *LoadBalancer) pickService() (*dspb.Service, error) {
 
 func (lb *LoadBalancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	fmt.Println("in servehttp")
+
 	service, err := lb.pickService()
 	if err != nil {
 		log.Printf("Failed to fetch a service")
@@ -57,36 +78,62 @@ func (lb *LoadBalancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	log.Println(service)
 
-	proxyReq, err := http.NewRequest(req.Method, service.Addr, req.Body)
+	conn, err := grpc.NewClient(service.Grpcport, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		http.Error(w, "Failed to create request", http.StatusInternalServerError)
-		return
+		log.Fatalf("could not connect to gRPC server: %v", err)
 	}
+	defer conn.Close()
 
-	for header, values := range req.Header {
-		for _, value := range values {
-			proxyReq.Header.Add(header, value)
+	client := espb.NewEventServiceClient(conn)
+	w.Header().Set("Content-Type", "application/json")
+	var jsonres []byte
+
+	switch method := req.Method; method {
+	case "GET":
+		response, err := client.GetAllEvents(context.Background(), nil)
+		if err != nil {
+			log.Fatalf("error while calling gRPC service: %v", err)
 		}
+		log.Printf("Response from gRPC service: %v", response)
+		jsonres = lb.GrpctoHTTP(response)
+
+	case "POST":
+		eventGrpcBody := lb.ReflectHTTP(req)
+		response, err := client.CreateEvent(context.Background(), eventGrpcBody)
+		if err != nil {
+			log.Fatalf("error while calling gRPC service: %v", err)
+		}
+		log.Printf("Response from gRPC service: %v", response)
+		jsonres = lb.GrpctoHTTP(response)
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(proxyReq)
-	log.Println(proxyReq)
+	w.Write(jsonres)
 
+
+}
+
+func (lb *LoadBalancer) ReflectHTTP(req *http.Request) *espb.EventCreateRequest {
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
-		http.Error(w, "Failed to reach backend server", http.StatusServiceUnavailable)
-		return
-	}
-	defer resp.Body.Close()
+		log.Fatalln("Unable to read body")
 
-	for header, values := range resp.Header {
-		for _, value := range values {
-			w.Header().Add(header, value)
-		}
 	}
 
-	w.WriteHeader(resp.StatusCode)
-	io.Copy(w, resp.Body)
+	var eventJSON EventJSON
+	err = json.Unmarshal(body, &eventJSON)
+	if err != nil {
+		log.Fatalln("Unable to parse body")
+	}
+
+	eventGrpc := &espb.EventCreateRequest{
+		Location:     eventJSON.Location,
+		Name:         eventJSON.Name,
+		Seats:        eventJSON.Seats,
+		Date:         eventJSON.Date,
+		Ticketamount: eventJSON.Ticketamount,
+	}
+
+	return eventGrpc
 }
 
 func main() {
@@ -97,7 +144,7 @@ func main() {
 	}
 
 	r := mux.NewRouter()
-	r.HandleFunc("/lb", lb.ServeHTTP)
+	r.HandleFunc("/event", lb.ServeHTTP)
 
 	http.Handle("/", r)
 	fmt.Println("Load balancer listening on port 8080...")

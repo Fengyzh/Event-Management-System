@@ -90,7 +90,7 @@ func (s *DiscoveryService) checkServiceHealth() {
 				log.Printf("Service %s at %s is unhealthy", service.Name, service.Addr)
 				s.Services[index].Available = false
 			} else {
-				log.Printf("Service %s at %s is healthy", res.Name, res.Addr)
+				log.Printf("Service %s at %s is healthy", *res.Name, res.Addr)
 			}
 			conn.Close()
 

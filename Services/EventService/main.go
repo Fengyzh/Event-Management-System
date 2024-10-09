@@ -20,9 +20,13 @@ type EventService struct {
 	Events []*espb.Event
 }
 
+func stringPointer(s string) *string {
+	return &s
+}
+
 func (ds *DiscoveryService) HealthCheck(ctx context.Context, _ *dspb.Empty) (*dspb.ServiceHealthCheck, error) {
 
-	return &dspb.ServiceHealthCheck{Id: 1, Status: true, Name: "First Service", Addr: "localhost:50052", Message: "MSG from service one"}, nil
+	return &dspb.ServiceHealthCheck{Id: 1, Status: true, Name: stringPointer("First Service"), Addr: "localhost:50052", Message: stringPointer("MSG from service one")}, nil
 }
 
 func (es *EventService) CreateEvent(ctx context.Context, req *espb.EventCreateRequest) (*espb.EventResponse, error) {
@@ -55,6 +59,7 @@ func main() {
 		Id:        1,
 		Available: true,
 		Flag:      nil,
+		Grpcport: "localhost:50053",
 	})
 
 	if err != nil {

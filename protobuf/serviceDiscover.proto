@@ -41,6 +41,7 @@ message Service {
     string name = 3;
     bool available = 4;
     repeated string flag = 5;
+    string grpcport = 6;
 }
 
 message ServiceResponse {
