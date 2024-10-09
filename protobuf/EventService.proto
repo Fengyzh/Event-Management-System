@@ -8,7 +8,7 @@ service EventService {
     rpc CreateEvent (EventCreateRequest) returns (EventResponse) {}
     rpc GetAllEvents (Empty) returns (EventList) {}
     rpc GetEvent (EventId) returns (Event) {}
-    rpc UpdateEvent (EventCreateRequest) returns (EventResponse) {}
+    rpc UpdateEvent (Event) returns (EventResponse) {}
     rpc DeleteEvent (EventId) returns (EventResponse) {}
 }
 

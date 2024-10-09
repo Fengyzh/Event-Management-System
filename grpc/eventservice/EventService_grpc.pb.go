@@ -33,7 +33,7 @@ type EventServiceClient interface {
 	CreateEvent(ctx context.Context, in *EventCreateRequest, opts ...grpc.CallOption) (*EventResponse, error)
 	GetAllEvents(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*EventList, error)
 	GetEvent(ctx context.Context, in *EventId, opts ...grpc.CallOption) (*Event, error)
-	UpdateEvent(ctx context.Context, in *EventCreateRequest, opts ...grpc.CallOption) (*EventResponse, error)
+	UpdateEvent(ctx context.Context, in *Event, opts ...grpc.CallOption) (*EventResponse, error)
 	DeleteEvent(ctx context.Context, in *EventId, opts ...grpc.CallOption) (*EventResponse, error)
 }
 
@@ -75,7 +75,7 @@ func (c *eventServiceClient) GetEvent(ctx context.Context, in *EventId, opts ...
 	return out, nil
 }
 
-func (c *eventServiceClient) UpdateEvent(ctx context.Context, in *EventCreateRequest, opts ...grpc.CallOption) (*EventResponse, error) {
+func (c *eventServiceClient) UpdateEvent(ctx context.Context, in *Event, opts ...grpc.CallOption) (*EventResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(EventResponse)
 	err := c.cc.Invoke(ctx, EventService_UpdateEvent_FullMethodName, in, out, cOpts...)
@@ -102,7 +102,7 @@ type EventServiceServer interface {
 	CreateEvent(context.Context, *EventCreateRequest) (*EventResponse, error)
 	GetAllEvents(context.Context, *Empty) (*EventList, error)
 	GetEvent(context.Context, *EventId) (*Event, error)
-	UpdateEvent(context.Context, *EventCreateRequest) (*EventResponse, error)
+	UpdateEvent(context.Context, *Event) (*EventResponse, error)
 	DeleteEvent(context.Context, *EventId) (*EventResponse, error)
 	mustEmbedUnimplementedEventServiceServer()
 }
@@ -123,7 +123,7 @@ func (UnimplementedEventServiceServer) GetAllEvents(context.Context, *Empty) (*E
 func (UnimplementedEventServiceServer) GetEvent(context.Context, *EventId) (*Event, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetEvent not implemented")
 }
-func (UnimplementedEventServiceServer) UpdateEvent(context.Context, *EventCreateRequest) (*EventResponse, error) {
+func (UnimplementedEventServiceServer) UpdateEvent(context.Context, *Event) (*EventResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateEvent not implemented")
 }
 func (UnimplementedEventServiceServer) DeleteEvent(context.Context, *EventId) (*EventResponse, error) {
@@ -205,7 +205,7 @@ func _EventService_GetEvent_Handler(srv interface{}, ctx context.Context, dec fu
 }
 
 func _EventService_UpdateEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(EventCreateRequest)
+	in := new(Event)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -217,7 +217,7 @@ func _EventService_UpdateEvent_Handler(srv interface{}, ctx context.Context, dec
 		FullMethod: EventService_UpdateEvent_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EventServiceServer).UpdateEvent(ctx, req.(*EventCreateRequest))
+		return srv.(EventServiceServer).UpdateEvent(ctx, req.(*Event))
 	}
 	return interceptor(ctx, in, info, handler)
 }

@@ -5,6 +5,7 @@ import (
 	espb "go-lb/grpc/eventservice"
 	dspb "go-lb/servicediscovery"
 	"log"
+	"math/rand"
 	"net"
 
 	"google.golang.org/grpc"
@@ -31,7 +32,7 @@ func (ds *DiscoveryService) HealthCheck(ctx context.Context, _ *dspb.Empty) (*ds
 
 func (es *EventService) CreateEvent(ctx context.Context, req *espb.EventCreateRequest) (*espb.EventResponse, error) {
 
-	var eid int32 = 1
+	var eid int32 = rand.Int31()
 	newEvent := &espb.Event{Eventid: eid, Ticketamount: req.Ticketamount, Name: req.Name, Location: req.Location, Date: req.Date, Seats: req.Seats}
 	es.Events = append(es.Events, newEvent)
 
@@ -42,6 +43,33 @@ func (es *EventService) GetAllEvents(ctx context.Context, _ *espb.Empty) (*espb.
 
 	return &espb.EventList{Events: es.Events}, nil
 }
+
+
+func (es *EventService) GetEvent(ctx context.Context, eid *espb.EventId) (*espb.Event, error) {
+
+	for _, e := range(es.Events) {
+		if eid.Eventid == e.Eventid {
+			return e, nil
+		}
+	}
+
+	return nil, nil
+}
+
+func (es *EventService) UpdateEvent(ctx context.Context, event *espb.Event) (*espb.EventResponse, error) {
+
+	eid := event.Eventid
+	for idx, e := range(es.Events) {
+		if e.Eventid == eid {
+			es.Events[idx] = event
+			break
+		}
+	}
+
+	return &espb.EventResponse{Eventid: event.Eventid, Message: "Update Complete"}, nil
+}
+
+
 
 func main() {
 

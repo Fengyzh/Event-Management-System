@@ -1,6 +1,12 @@
 # Service
-    - Implement route
-    
+    - [] Implement route
+        - [x] Get All
+        - [x] Create
+        - [] Get Specific
+        - [] Delete
+
+# LoadBalancer 
+    - [] Retry logic (route logic to another healthy instance when failed)    
 
 
 
