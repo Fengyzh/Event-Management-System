@@ -1,4 +1,4 @@
-package main
+package loadbalancer
 
 import (
 	"context"
@@ -39,6 +39,18 @@ type EventJSON struct {
 	Date         []string `json:"date"`
 	Seats        []string `json:"seats"`
 }
+
+
+func NewLoadBalancer() *LoadBalancer {
+
+	return &LoadBalancer{
+		Services: []*dspb.Service{},
+		CurrentIndex: 0,
+	}
+}
+
+
+
 
 func (lb *LoadBalancer) GrpctoHTTP(grpcRes any) []byte {
 	jsonres, err := json.Marshal(grpcRes)
@@ -84,8 +96,6 @@ func (lb *LoadBalancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Printf("Failed to fetch a service")
 	}
-
-	log.Println(service)
 
 	conn, err := grpc.NewClient(service.Grpcport, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -251,23 +261,3 @@ func (lb *LoadBalancer) ReflectHTTPEvent(req *http.Request) *espb.Event {
 	return eventGrpc
 }
 
-
-
-func main() {
-
-	lb := &LoadBalancer{
-		Services:     []*dspb.Service{},
-		CurrentIndex: 0,
-	}
-
-	r := mux.NewRouter()
-	r.HandleFunc("/event", lb.GetEvents).Methods("GET")
-	r.HandleFunc("/event/{id}", lb.GetEventById).Methods("GET")
-	r.HandleFunc("/event", lb.CreateEvent).Methods("POST")
-	r.HandleFunc("/event/{id}", lb.UpdateEvent).Methods("POST")
-
-	http.Handle("/", r)
-	fmt.Println("Load balancer listening on port 8080...")
-	http.ListenAndServe(":8080", nil)
-
-}

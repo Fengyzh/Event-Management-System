@@ -1,11 +1,10 @@
-package main
+package discoveryservice
 
 import (
 	"context"
 	"errors"
 	dspb "go-lb/servicediscovery"
 	"log"
-	"net"
 	"sync"
 	"time"
 
@@ -18,6 +17,8 @@ type DiscoveryService struct {
 	Services []*dspb.Service
 	mu       sync.Mutex
 }
+
+
 
 func (s *DiscoveryService) ContainsService(service *dspb.Service) (int) {
 	for idx, serv := range s.Services {
@@ -69,7 +70,7 @@ func (s *DiscoveryService) GetAllService(ctx context.Context, _ *dspb.Empty) (*d
 	return &dspb.ServiceResponseList{Response: availableServiceList}, err
 }
 
-func (s *DiscoveryService) checkServiceHealth() {
+func (s *DiscoveryService) CheckServiceHealth() {
 
 	//var AllServiceStatus []*dspb.ServiceHealthCheck
 
@@ -100,25 +101,5 @@ func (s *DiscoveryService) checkServiceHealth() {
 
 	}
 	//return AllServiceStatus, nil
-
-}
-
-func main() {
-	lis, err := net.Listen("tcp", ":50051")
-	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
-	}
-
-	s := grpc.NewServer()
-	discoveryServer := NewDiscoveryService()
-
-	dspb.RegisterDiscoveryServiceServer(s, discoveryServer)
-
-	go discoveryServer.checkServiceHealth()
-
-	log.Printf("Server is listening on port 50051")
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
-	}
 
 }
