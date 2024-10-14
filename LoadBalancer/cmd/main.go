@@ -21,6 +21,7 @@ func main() {
 	r.HandleFunc("/event/{id}", lb.GetEventById).Methods("GET")
 	r.HandleFunc("/event", lb.CreateEvent).Methods("POST")
 	r.HandleFunc("/event/{id}", lb.UpdateEvent).Methods("POST")
+	r.HandleFunc("/event/{id}", lb.DeleteEvent).Methods("DELETE")
 
 	http.Handle("/", r)
 	fmt.Println("Load balancer listening on port 8080...")

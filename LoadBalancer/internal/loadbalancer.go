@@ -32,7 +32,7 @@ type EventCreateJSON struct {
 }
 
 type EventJSON struct {
-	EventId int32 `json:"eventid"`
+	EventId      int32    `json:"eventid"`
 	Name         string   `json:"name"`
 	Location     string   `json:"location"`
 	Ticketamount int32    `json:"ticketamount"`
@@ -40,17 +40,13 @@ type EventJSON struct {
 	Seats        []string `json:"seats"`
 }
 
-
 func NewLoadBalancer() *LoadBalancer {
 
 	return &LoadBalancer{
-		Services: []*dspb.Service{},
+		Services:     []*dspb.Service{},
 		CurrentIndex: 0,
 	}
 }
-
-
-
 
 func (lb *LoadBalancer) GrpctoHTTP(grpcRes any) []byte {
 	jsonres, err := json.Marshal(grpcRes)
@@ -135,7 +131,8 @@ func (lb *LoadBalancer) GetGrpcClient() (espb.EventServiceClient, *grpc.ClientCo
 	if err != nil {
 		log.Printf("Failed to fetch a service")
 	}
-	log.Println(service)
+	//log.Println(service)
+	log.Printf("Picked: %s at %s", service.Name, service.Addr)
 
 	conn, err := grpc.NewClient(service.Grpcport, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -181,7 +178,7 @@ func (lb *LoadBalancer) GetEventById(w http.ResponseWriter, req *http.Request) {
 	id := vars["id"]
 	eid, _ := strconv.ParseInt(id, 10, 32)
 
-	response, err := client.GetEvent(context.Background(), &espb.EventId{Eventid:int32(eid)})
+	response, err := client.GetEvent(context.Background(), &espb.EventId{Eventid: int32(eid)})
 	if err != nil {
 		log.Fatalf("error while calling gRPC service: %v", err)
 	}
@@ -190,7 +187,6 @@ func (lb *LoadBalancer) GetEventById(w http.ResponseWriter, req *http.Request) {
 	w.Write(jsonres)
 
 }
-
 
 func (lb *LoadBalancer) UpdateEvent(w http.ResponseWriter, req *http.Request) {
 	client, conn := lb.GetGrpcClient()
@@ -207,6 +203,24 @@ func (lb *LoadBalancer) UpdateEvent(w http.ResponseWriter, req *http.Request) {
 }
 
 
+func (lb *LoadBalancer) DeleteEvent(w http.ResponseWriter, req *http.Request) {
+	client, conn := lb.GetGrpcClient()
+	defer conn.Close()
+
+	vars := mux.Vars(req)
+	id := vars["id"]
+	eid, _ := strconv.ParseInt(id, 10, 32)
+
+	eventGrpcBody := &espb.EventId{Eventid: int32(eid)}
+	response, err := client.DeleteEvent(context.Background(), eventGrpcBody)
+	if err != nil {
+		log.Fatalf("error while calling gRPC service: %v", err)
+	}
+	log.Printf("Response from gRPC service: %v", response)
+	jsonres := lb.GrpctoHTTP(response)
+	w.Write(jsonres)
+
+}
 
 
 func (lb *LoadBalancer) ReflectHTTPCreateRequest(req *http.Request) *espb.EventCreateRequest {
@@ -250,7 +264,7 @@ func (lb *LoadBalancer) ReflectHTTPEvent(req *http.Request) *espb.Event {
 	eid, _ := strconv.ParseInt(id, 10, 32)
 
 	eventGrpc := &espb.Event{
-		Eventid:	  int32(eid),
+		Eventid:      int32(eid),
 		Location:     eventJSON.Location,
 		Name:         eventJSON.Name,
 		Seats:        eventJSON.Seats,
@@ -260,4 +274,3 @@ func (lb *LoadBalancer) ReflectHTTPEvent(req *http.Request) *espb.Event {
 
 	return eventGrpc
 }
-
