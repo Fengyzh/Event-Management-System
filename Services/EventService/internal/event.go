@@ -91,3 +91,10 @@ func (es *EventService) DeleteEvent(ctx context.Context, eid *espb.EventId) (*es
 	return es.db.DeleteEvent(eid)
 
 }
+
+
+func (es *EventService) OrderEventTicket(ctx context.Context, eid *espb.EventId) (*espb.EventResponse, error) {
+	
+	return es.db.OrderEventTicket(eid)
+}
+

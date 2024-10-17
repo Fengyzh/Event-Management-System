@@ -10,6 +10,7 @@ service EventService {
     rpc GetEvent (EventId) returns (Event) {}
     rpc UpdateEvent (Event) returns (EventResponse) {}
     rpc DeleteEvent (EventId) returns (EventResponse) {}
+    rpc OrderEventTicket (EventId) returns (EventResponse) {} 
 }
 
 message Empty {}

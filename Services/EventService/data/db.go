@@ -82,16 +82,26 @@ func (er *PGEventRepository) GetEventById(eid *espb.EventId) (*espb.Event, error
 
 func (er *PGEventRepository) UpdateEvent(event *espb.Event) (*espb.EventResponse, error) {
 	tx, _ := er.db.Begin()
+	var e = &espb.Event{}
 
-	query := "SELECT event_id FROM Events WHERE event_id = $1 FOR UPDATE"
-	err := tx.QueryRow(query, event.Eventid).Scan(&event.Eventid)
+	query := "SELECT event_id, ticket_amount FROM Events WHERE event_id = $1 FOR UPDATE"
+	//query := "SELECT event_id, ticket_amount FROM Events WHERE event_id = $1"
+
+	err := tx.QueryRow(query, event.Eventid).Scan(&e.Eventid, &e.Ticketamount)
 	if err != nil {
 		tx.Rollback()
 		log.Fatal(err)
 	}
 	log.Printf("Locked row with id: %d\n", event.Eventid)
 
-	_, err = tx.Exec("UPDATE Events SET name = $1, location = $2, ticket_amount = $3, date = $4, seats = $5 WHERE event_id = $6", event.Name, event.Location, event.Ticketamount, pq.Array(event.Date), pq.Array(event.Seats), event.Eventid)
+	if e.Ticketamount == 0 {
+		tx.Commit()
+		return &espb.EventResponse{Eventid: event.Eventid, Message: "Tickets sold out"}, err
+	}
+
+	  _, err = tx.Exec("UPDATE Events SET name = $1, location = $2, ticket_amount = $3, date = $4, seats = $5 WHERE event_id = $6", event.Name, event.Location, event.Ticketamount, pq.Array(event.Date), pq.Array(event.Seats), event.Eventid)
+
+	//_, err = tx.Exec("UPDATE Events SET ticket_amount = ticket_amount - 1 WHERE event_id = $1", event.Eventid)
 
 	if err != nil {
 		tx.Rollback()
@@ -118,4 +128,41 @@ func (er *PGEventRepository) DeleteEvent(eid *espb.EventId) (*espb.EventResponse
 
 	log.Println("Successfully deleted event in DB")
 	return &espb.EventResponse{Eventid: eid.Eventid, Message: "Successfully deleted event in DB"}, nil
+}
+
+
+func (er *PGEventRepository) OrderTicketEvent(eid *espb.EventId) (*espb.EventResponse, error) {
+
+	tx, _ := er.db.Begin()
+	var e = &espb.Event{}
+
+	query := "SELECT event_id, ticket_amount FROM Events WHERE event_id = $1 FOR UPDATE"
+
+	err := tx.QueryRow(query, eid.Eventid).Scan(&e.Eventid, &e.Ticketamount)
+	if err != nil {
+		tx.Rollback()
+		log.Fatal(err)
+	}
+	log.Printf("Locked row with id: %d\n", eid.Eventid)
+
+	if e.Ticketamount == 0 {
+		tx.Commit()
+		return &espb.EventResponse{Eventid: eid.Eventid, Message: "Tickets sold out"}, err
+	}
+
+	_, err = tx.Exec("UPDATE Events SET ticket_amount = ticket_amount - 1 WHERE event_id = $1", eid.Eventid)
+
+	if err != nil {
+		tx.Rollback()
+		return &espb.EventResponse{Eventid: eid.Eventid, Message: "Failed to update event"}, err
+	}
+
+	err = tx.Commit()
+    if err != nil {
+        log.Fatal(err)
+    }
+
+	log.Println("Successfully updated event in DB")
+
+	return &espb.EventResponse{Eventid: eid.Eventid, Message: "Successfully updated event"}, nil
 }

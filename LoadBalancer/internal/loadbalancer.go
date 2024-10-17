@@ -223,6 +223,26 @@ func (lb *LoadBalancer) DeleteEvent(w http.ResponseWriter, req *http.Request) {
 }
 
 
+func (lb *LoadBalancer) OrderTicketEvent(w http.ResponseWriter, req *http.Request) {
+	client, conn := lb.GetGrpcClient()
+	defer conn.Close()
+
+	vars := mux.Vars(req)
+	id := vars["id"]
+	eid, _ := strconv.ParseInt(id, 10, 32)
+
+	eventGrpcBody := &espb.EventId{Eventid: int32(eid)}
+	response, err := client.OrderEventTicket(context.Background(), eventGrpcBody)
+	if err != nil {
+		log.Fatalf("error while calling gRPC service: %v", err)
+	}
+	log.Printf("Response from gRPC service: %v", response)
+	jsonres := lb.GrpctoHTTP(response)
+	w.Write(jsonres)
+}
+
+
+
 func (lb *LoadBalancer) ReflectHTTPCreateRequest(req *http.Request) *espb.EventCreateRequest {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
