@@ -10,12 +10,17 @@ service DiscoveryService {
     rpc HealthCheck (Empty) returns (ServiceHealthCheck) {}
     rpc HealthCheckOnSerice (ServiceID) returns (ServiceHealthCheck) {}
     rpc RemoveService (ServiceID) returns (ServiceResponse) {}
+    rpc GetServiceByFlag (ServiceFlag) returns (ServiceResponseList) {}
 }
 
 message Empty {}
 
 message ServiceID {
     int32 id = 1;
+}
+
+message ServiceFlag {
+    repeated string flag = 1;
 }
 
 message ServiceResponseList {

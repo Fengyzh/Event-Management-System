@@ -8,7 +8,7 @@ service TicketService {
     rpc CreateTicket (TicketCreateRequest) returns (TicketOrderResponse) {}
     rpc GetAllTickets (Empty) returns (TicketList) {}
     rpc GetTicket (TicketId) returns (TicketOrder) {}
-    rpc UpdateTicket (TicketCreateRequest) returns (TicketOrderResponse) {}
+    rpc UpdateTicket (TicketOrder) returns (TicketOrderResponse) {}
     rpc DeleteTicket (TicketId) returns (TicketOrderResponse) {}
 }
 
@@ -27,7 +27,7 @@ message TicketOrder {
     int32 eventid = 1;
     int32 amount = 2;
     string location = 3;
-    repeated string date = 4;
+    string date = 4;
     string seat = 5;
     bool fulfilled = 6;
     int32 ticketid = 7;

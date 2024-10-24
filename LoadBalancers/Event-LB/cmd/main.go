@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"github.com/gorilla/mux"
-	loadbalancer "go-lb/LoadBalancer/internal"
+	loadbalancer "go-lb/LoadBalancers/Event-LB/internal"
 )
 
 

@@ -31,7 +31,7 @@ func main() {
 		Addr:      "localhost:50052",
 		Id:        1,
 		Available: true,
-		Flag:      nil,
+		Flag:      []string{"event"},
 		Grpcport:  "localhost:50053",
 	})
 

@@ -10,8 +10,14 @@ type TicketService struct {
 	repo ticketdata.TicketRepository 
 }
 
+
+
 func NewTicketService(db ticketdata.TicketRepository) (*TicketService) {
 	return &TicketService{repo: db}
+}
+
+func (ts *TicketService) CreateTicket(ticketCreate *tpb.TicketCreateRequest) (*tpb.TicketOrderResponse, error) {
+	return ts.repo.CreateTicket(ticketCreate)
 }
 
 func (ts *TicketService) GetAllTickets() (*tpb.TicketList, error) {
@@ -22,7 +28,7 @@ func (ts *TicketService) GetTicket(tid *tpb.TicketId) (*tpb.TicketOrder, error) 
 	return ts.repo.GetTicket(tid)
 }
 
-func (ts *TicketService) UpdateTicket(ticketC *tpb.TicketCreateRequest) (*tpb.TicketOrderResponse, error) {
+func (ts *TicketService) UpdateTicket(ticketC *tpb.TicketOrder) (*tpb.TicketOrderResponse, error) {
 	return ts.repo.UpdateTicket(ticketC)
 }
 

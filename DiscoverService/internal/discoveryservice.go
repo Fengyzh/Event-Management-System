@@ -14,13 +14,12 @@ import (
 
 type DiscoveryService struct {
 	dspb.UnimplementedDiscoveryServiceServer
-	Services []*dspb.Service
-	mu       sync.Mutex
+	Services   []*dspb.Service
+	ServiceMap map[string][]int
+	mu         sync.Mutex
 }
 
-
-
-func (s *DiscoveryService) ContainsService(service *dspb.Service) (int) {
+func (s *DiscoveryService) ContainsService(service *dspb.Service) int {
 	for idx, serv := range s.Services {
 		if serv.Addr == service.Addr {
 			return idx
@@ -29,9 +28,8 @@ func (s *DiscoveryService) ContainsService(service *dspb.Service) (int) {
 	return -1
 }
 
-
 func NewDiscoveryService() *DiscoveryService {
-	return &DiscoveryService{Services: make([]*dspb.Service, 0)}
+	return &DiscoveryService{Services: make([]*dspb.Service, 0), ServiceMap: make(map[string][]int)}
 }
 
 func (s *DiscoveryService) RegisterService(ctx context.Context, service *dspb.Service) (*dspb.ServiceResponse, error) {
@@ -44,9 +42,9 @@ func (s *DiscoveryService) RegisterService(ctx context.Context, service *dspb.Se
 		log.Printf("Service at address %s re-registered", service.Addr)
 	} else {
 		s.Services = append(s.Services, service)
+		s.ServiceMap[service.Flag[0]] = append(s.ServiceMap[service.Flag[0]], len(s.ServiceMap[service.Flag[0]]))
 		log.Printf("Service %s registered at %s", service.Name, service.Addr)
 	}
-
 
 	return &dspb.ServiceResponse{Message: "Added Service into list", Status: 200}, nil
 }
@@ -56,7 +54,7 @@ func (s *DiscoveryService) GetAllService(ctx context.Context, _ *dspb.Empty) (*d
 	log.Printf("Service get request")
 	var availableServiceList []*dspb.Service
 
-	for _, service := range(s.Services) {
+	for _, service := range s.Services {
 		if service.Available {
 			availableServiceList = append(availableServiceList, service)
 		}
@@ -68,6 +66,23 @@ func (s *DiscoveryService) GetAllService(ctx context.Context, _ *dspb.Empty) (*d
 	}
 
 	return &dspb.ServiceResponseList{Response: availableServiceList}, err
+}
+
+func (s *DiscoveryService) GetServiceByFlag(ctx context.Context, flag *dspb.ServiceFlag) (*dspb.ServiceResponseList, error) {
+	var availableServiceList []*dspb.Service
+
+	log.Println(flag.Flag)
+	val, ok := s.ServiceMap[flag.Flag[0]]
+	if ok {
+		for _, serviceidx := range val {
+			if s.Services[serviceidx].Available {
+				availableServiceList = append(availableServiceList, s.Services[serviceidx])
+			}
+		}
+	}
+
+	return &dspb.ServiceResponseList{Response: availableServiceList}, nil
+
 }
 
 func (s *DiscoveryService) CheckServiceHealth() {

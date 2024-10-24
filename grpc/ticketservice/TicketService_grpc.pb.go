@@ -33,7 +33,7 @@ type TicketServiceClient interface {
 	CreateTicket(ctx context.Context, in *TicketCreateRequest, opts ...grpc.CallOption) (*TicketOrderResponse, error)
 	GetAllTickets(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*TicketList, error)
 	GetTicket(ctx context.Context, in *TicketId, opts ...grpc.CallOption) (*TicketOrder, error)
-	UpdateTicket(ctx context.Context, in *TicketCreateRequest, opts ...grpc.CallOption) (*TicketOrderResponse, error)
+	UpdateTicket(ctx context.Context, in *TicketOrder, opts ...grpc.CallOption) (*TicketOrderResponse, error)
 	DeleteTicket(ctx context.Context, in *TicketId, opts ...grpc.CallOption) (*TicketOrderResponse, error)
 }
 
@@ -75,7 +75,7 @@ func (c *ticketServiceClient) GetTicket(ctx context.Context, in *TicketId, opts 
 	return out, nil
 }
 
-func (c *ticketServiceClient) UpdateTicket(ctx context.Context, in *TicketCreateRequest, opts ...grpc.CallOption) (*TicketOrderResponse, error) {
+func (c *ticketServiceClient) UpdateTicket(ctx context.Context, in *TicketOrder, opts ...grpc.CallOption) (*TicketOrderResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(TicketOrderResponse)
 	err := c.cc.Invoke(ctx, TicketService_UpdateTicket_FullMethodName, in, out, cOpts...)
@@ -102,7 +102,7 @@ type TicketServiceServer interface {
 	CreateTicket(context.Context, *TicketCreateRequest) (*TicketOrderResponse, error)
 	GetAllTickets(context.Context, *Empty) (*TicketList, error)
 	GetTicket(context.Context, *TicketId) (*TicketOrder, error)
-	UpdateTicket(context.Context, *TicketCreateRequest) (*TicketOrderResponse, error)
+	UpdateTicket(context.Context, *TicketOrder) (*TicketOrderResponse, error)
 	DeleteTicket(context.Context, *TicketId) (*TicketOrderResponse, error)
 	mustEmbedUnimplementedTicketServiceServer()
 }
@@ -123,7 +123,7 @@ func (UnimplementedTicketServiceServer) GetAllTickets(context.Context, *Empty) (
 func (UnimplementedTicketServiceServer) GetTicket(context.Context, *TicketId) (*TicketOrder, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTicket not implemented")
 }
-func (UnimplementedTicketServiceServer) UpdateTicket(context.Context, *TicketCreateRequest) (*TicketOrderResponse, error) {
+func (UnimplementedTicketServiceServer) UpdateTicket(context.Context, *TicketOrder) (*TicketOrderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateTicket not implemented")
 }
 func (UnimplementedTicketServiceServer) DeleteTicket(context.Context, *TicketId) (*TicketOrderResponse, error) {
@@ -205,7 +205,7 @@ func _TicketService_GetTicket_Handler(srv interface{}, ctx context.Context, dec 
 }
 
 func _TicketService_UpdateTicket_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TicketCreateRequest)
+	in := new(TicketOrder)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -217,7 +217,7 @@ func _TicketService_UpdateTicket_Handler(srv interface{}, ctx context.Context, d
 		FullMethod: TicketService_UpdateTicket_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TicketServiceServer).UpdateTicket(ctx, req.(*TicketCreateRequest))
+		return srv.(TicketServiceServer).UpdateTicket(ctx, req.(*TicketOrder))
 	}
 	return interceptor(ctx, in, info, handler)
 }

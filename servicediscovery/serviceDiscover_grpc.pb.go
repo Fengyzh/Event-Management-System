@@ -24,6 +24,7 @@ const (
 	DiscoveryService_HealthCheck_FullMethodName         = "/servicediscovery.DiscoveryService/HealthCheck"
 	DiscoveryService_HealthCheckOnSerice_FullMethodName = "/servicediscovery.DiscoveryService/HealthCheckOnSerice"
 	DiscoveryService_RemoveService_FullMethodName       = "/servicediscovery.DiscoveryService/RemoveService"
+	DiscoveryService_GetServiceByFlag_FullMethodName    = "/servicediscovery.DiscoveryService/GetServiceByFlag"
 )
 
 // DiscoveryServiceClient is the client API for DiscoveryService service.
@@ -35,6 +36,7 @@ type DiscoveryServiceClient interface {
 	HealthCheck(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ServiceHealthCheck, error)
 	HealthCheckOnSerice(ctx context.Context, in *ServiceID, opts ...grpc.CallOption) (*ServiceHealthCheck, error)
 	RemoveService(ctx context.Context, in *ServiceID, opts ...grpc.CallOption) (*ServiceResponse, error)
+	GetServiceByFlag(ctx context.Context, in *ServiceFlag, opts ...grpc.CallOption) (*ServiceResponseList, error)
 }
 
 type discoveryServiceClient struct {
@@ -95,6 +97,16 @@ func (c *discoveryServiceClient) RemoveService(ctx context.Context, in *ServiceI
 	return out, nil
 }
 
+func (c *discoveryServiceClient) GetServiceByFlag(ctx context.Context, in *ServiceFlag, opts ...grpc.CallOption) (*ServiceResponseList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ServiceResponseList)
+	err := c.cc.Invoke(ctx, DiscoveryService_GetServiceByFlag_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DiscoveryServiceServer is the server API for DiscoveryService service.
 // All implementations must embed UnimplementedDiscoveryServiceServer
 // for forward compatibility.
@@ -104,6 +116,7 @@ type DiscoveryServiceServer interface {
 	HealthCheck(context.Context, *Empty) (*ServiceHealthCheck, error)
 	HealthCheckOnSerice(context.Context, *ServiceID) (*ServiceHealthCheck, error)
 	RemoveService(context.Context, *ServiceID) (*ServiceResponse, error)
+	GetServiceByFlag(context.Context, *ServiceFlag) (*ServiceResponseList, error)
 	mustEmbedUnimplementedDiscoveryServiceServer()
 }
 
@@ -128,6 +141,9 @@ func (UnimplementedDiscoveryServiceServer) HealthCheckOnSerice(context.Context, 
 }
 func (UnimplementedDiscoveryServiceServer) RemoveService(context.Context, *ServiceID) (*ServiceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveService not implemented")
+}
+func (UnimplementedDiscoveryServiceServer) GetServiceByFlag(context.Context, *ServiceFlag) (*ServiceResponseList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetServiceByFlag not implemented")
 }
 func (UnimplementedDiscoveryServiceServer) mustEmbedUnimplementedDiscoveryServiceServer() {}
 func (UnimplementedDiscoveryServiceServer) testEmbeddedByValue()                          {}
@@ -240,6 +256,24 @@ func _DiscoveryService_RemoveService_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DiscoveryService_GetServiceByFlag_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ServiceFlag)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DiscoveryServiceServer).GetServiceByFlag(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DiscoveryService_GetServiceByFlag_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DiscoveryServiceServer).GetServiceByFlag(ctx, req.(*ServiceFlag))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DiscoveryService_ServiceDesc is the grpc.ServiceDesc for DiscoveryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -266,6 +300,10 @@ var DiscoveryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveService",
 			Handler:    _DiscoveryService_RemoveService_Handler,
+		},
+		{
+			MethodName: "GetServiceByFlag",
+			Handler:    _DiscoveryService_GetServiceByFlag_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
