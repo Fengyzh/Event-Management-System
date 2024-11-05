@@ -1,9 +1,12 @@
 package eventdata
 
 import (
+	"bytes"
 	"database/sql"
+	"encoding/json"
 	espb "go-lb/grpc/eventservice"
 	"log"
+	"net/http"
 
 	"github.com/lib/pq"
 )
@@ -15,6 +18,8 @@ type PGEventRepository struct {
 func NewPGEventRepository(db *sql.DB) EventRepository {
 	return &PGEventRepository{db: db}
 }
+
+
 
 func (er *PGEventRepository) CreateEvent(eventcr *espb.EventCreateRequest) error {
 	_, err := er.db.Exec("INSERT INTO Events (name, location, ticket_amount, date, seats) VALUES ($1, $2, $3, $4, $5)", eventcr.Name, eventcr.Location, eventcr.Ticketamount, pq.Array(eventcr.Date), pq.Array(eventcr.Seats))
@@ -28,12 +33,6 @@ func (er *PGEventRepository) CreateEvent(eventcr *espb.EventCreateRequest) error
 	return err
 }
 
-/* string location = 1;
-int32 ticketamount = 2;
-repeated string date = 3;
-repeated string seats = 4;
-string name = 5; */
-
 func (er *PGEventRepository) GetAllEvents() (*espb.EventList, error) {
 	rows, err := er.db.Query("SELECT * FROM Events")
 	if err != nil {
@@ -42,7 +41,6 @@ func (er *PGEventRepository) GetAllEvents() (*espb.EventList, error) {
 	defer rows.Close()
 
 	var events = &espb.EventList{}
-	//var tempEvents []*espb.Event
 
 	for rows.Next() {
 		var event espb.Event
@@ -58,8 +56,6 @@ func (er *PGEventRepository) GetAllEvents() (*espb.EventList, error) {
 		event.Seats = seats
 		event.Date = date
 		events.Events = append(events.Events, &event)
-		/* tempEvents := append(tempEvents, &event)
-		events.Events = tempEvents */
 
 	}
 
@@ -85,7 +81,6 @@ func (er *PGEventRepository) UpdateEvent(event *espb.Event) (*espb.EventResponse
 	var e = &espb.Event{}
 
 	query := "SELECT event_id, ticket_amount FROM Events WHERE event_id = $1 FOR UPDATE"
-	//query := "SELECT event_id, ticket_amount FROM Events WHERE event_id = $1"
 
 	err := tx.QueryRow(query, event.Eventid).Scan(&e.Eventid, &e.Ticketamount)
 	if err != nil {
@@ -101,7 +96,6 @@ func (er *PGEventRepository) UpdateEvent(event *espb.Event) (*espb.EventResponse
 
 	  _, err = tx.Exec("UPDATE Events SET name = $1, location = $2, ticket_amount = $3, date = $4, seats = $5 WHERE event_id = $6", event.Name, event.Location, event.Ticketamount, pq.Array(event.Date), pq.Array(event.Seats), event.Eventid)
 
-	//_, err = tx.Exec("UPDATE Events SET ticket_amount = ticket_amount - 1 WHERE event_id = $1", event.Eventid)
 
 	if err != nil {
 		tx.Rollback()
@@ -131,30 +125,46 @@ func (er *PGEventRepository) DeleteEvent(eid *espb.EventId) (*espb.EventResponse
 }
 
 
-func (er *PGEventRepository) OrderTicketEvent(eid *espb.EventId) (*espb.EventResponse, error) {
 
+
+func (er *PGEventRepository) OrderTicketEvent(eoq *espb.EventOrderRequest) (*espb.EventResponse, error) {
+
+	eid := eoq.Eventid
 	tx, _ := er.db.Begin()
 	var e = &espb.Event{}
 
 	query := "SELECT event_id, ticket_amount FROM Events WHERE event_id = $1 FOR UPDATE"
 
-	err := tx.QueryRow(query, eid.Eventid).Scan(&e.Eventid, &e.Ticketamount)
+	err := tx.QueryRow(query, eid).Scan(&e.Eventid, &e.Ticketamount)
 	if err != nil {
 		tx.Rollback()
 		log.Fatal(err)
 	}
-	log.Printf("Locked row with id: %d\n", eid.Eventid)
+	log.Printf("Locked row with id: %d\n", eid)
 
 	if e.Ticketamount == 0 {
 		tx.Commit()
-		return &espb.EventResponse{Eventid: eid.Eventid, Message: "Tickets sold out"}, err
+		return &espb.EventResponse{Eventid: eid, Message: "Tickets sold out"}, err
 	}
 
-	_, err = tx.Exec("UPDATE Events SET ticket_amount = ticket_amount - 1 WHERE event_id = $1", eid.Eventid)
+	_, err = tx.Exec("UPDATE Events SET ticket_amount = ticket_amount - 1 WHERE event_id = $1", eid)
 
 	if err != nil {
 		tx.Rollback()
-		return &espb.EventResponse{Eventid: eid.Eventid, Message: "Failed to update event"}, err
+		return &espb.EventResponse{Eventid: eid, Message: "Failed to update ticket amount"}, err
+	}
+	_, err = tx.Exec("UPDATE Events SET seats = array_remove(seats, $1) WHERE event_id = $2")
+
+	if err != nil {
+		tx.Rollback()
+		return &espb.EventResponse{Eventid: eid, Message: "Failed to update event seat"}, err
+	}
+
+
+	err = er.SendTicketOrder(eoq)
+	if err != nil {
+		tx.Rollback()
+		return &espb.EventResponse{Eventid: eid, Message: "Failed to create ticket"}, err
 	}
 
 	err = tx.Commit()
@@ -164,5 +174,36 @@ func (er *PGEventRepository) OrderTicketEvent(eid *espb.EventId) (*espb.EventRes
 
 	log.Println("Successfully updated event in DB")
 
-	return &espb.EventResponse{Eventid: eid.Eventid, Message: "Successfully updated event"}, nil
+	return &espb.EventResponse{Eventid: eid, Message: "Successfully updated event"}, nil
+}
+
+
+func (er *PGEventRepository) SendTicketOrder(eoq *espb.EventOrderRequest) (error) {
+	jsonData, err := json.Marshal(eoq)
+    if err != nil {
+        log.Printf("Error marshalling ticket: %v\n", err)
+        return err
+    }
+
+    url := "http://localhost:8081/ticket"
+    req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+    if err != nil {
+        log.Printf("Error creating request: %v\n", err)
+        return err
+    }
+
+    req.Header.Set("Content-Type", "application/json")
+
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        log.Printf("Error making request: %v\n", err)
+        return err
+    }
+    defer resp.Body.Close()
+
+
+    log.Println(resp)
+
+	return nil
 }

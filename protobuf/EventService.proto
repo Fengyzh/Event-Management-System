@@ -10,7 +10,7 @@ service EventService {
     rpc GetEvent (EventId) returns (Event) {}
     rpc UpdateEvent (Event) returns (EventResponse) {}
     rpc DeleteEvent (EventId) returns (EventResponse) {}
-    rpc OrderEventTicket (EventId) returns (EventResponse) {} 
+    rpc OrderEventTicket (EventOrderRequest) returns (EventResponse) {} 
 }
 
 message Empty {}
@@ -18,6 +18,15 @@ message Empty {}
 message EventId {
     int32 eventid = 1;
 }
+
+message EventOrderRequest {
+    int32 eventid = 1;
+    string location = 2;
+    int32 amount = 3;
+    string date = 4;
+    string seat = 5;
+}
+
 
 message EventCreateRequest {
     string location = 1;

@@ -110,6 +110,7 @@ func (lb *LoadBalancer) CreateTicket(w http.ResponseWriter, req *http.Request) {
 	response, err := client.CreateTicket(context.Background(), eventGrpcBody)
 	if err != nil {
 		log.Fatalf("error while calling gRPC service: %v", err)
+		http.Error(w, "Fail to Create Ticket", http.StatusServiceUnavailable)
 	}
 	log.Printf("Response from gRPC service: %v", response)
 	jsonres := lb.GrpctoHTTP(response)
@@ -179,25 +180,6 @@ func (lb *LoadBalancer) DeleteTicket(w http.ResponseWriter, req *http.Request) {
 	w.Write(jsonres)
 
 }
-
-// TODO
-/* func (lb *LoadBalancer) OrderTicketEvent(w http.ResponseWriter, req *http.Request) {
-	client, conn := lb.GetGrpcClient()
-	defer conn.Close()
-
-	vars := mux.Vars(req)
-	id := vars["id"]
-	eid, _ := strconv.ParseInt(id, 10, 32)
-
-	eventGrpcBody := &espb.EventId{Eventid: int32(eid)}
-	response, err := client.OrderEventTicket(context.Background(), eventGrpcBody)
-	if err != nil {
-		log.Fatalf("error while calling gRPC service: %v", err)
-	}
-	log.Printf("Response from gRPC service: %v", response)
-	jsonres := lb.GrpctoHTTP(response)
-	w.Write(jsonres)
-} */
 
 func (lb *LoadBalancer) ReflectHTTPCreateRequest(req *http.Request) *tpb.TicketCreateRequest {
 	body, err := io.ReadAll(req.Body)

@@ -22,7 +22,6 @@ func main() {
 	r.HandleFunc("/ticket", lb.CreateTicket).Methods("POST")
 	r.HandleFunc("/ticket/{id}", lb.UpdateTicket).Methods("POST")
 	r.HandleFunc("/ticket/{id}", lb.DeleteTicket).Methods("DELETE")
-	//r.HandleFunc("/ticket/order/{id}", lb.OrderTicketEvent).Methods("GET")
 
 
 	http.Handle("/", r)

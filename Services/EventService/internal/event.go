@@ -55,35 +55,18 @@ func (es *EventService) CreateEvent(ctx context.Context, req *espb.EventCreateRe
 func (es *EventService) GetAllEvents(ctx context.Context, _ *espb.Empty) (*espb.EventList, error) {
 
 	return es.db.GetAllEvents()
-	//return &espb.EventList{Events: es.Events}, nil
 }
 
 func (es *EventService) GetEvent(ctx context.Context, eid *espb.EventId) (*espb.Event, error) {
 
 
 	return es.db.GetEventById(eid)
-
-
-	/* for _, e := range es.Events {
-		if eid.Eventid == e.Eventid {
-			return e, nil
-		}
-	} */
 }
 
 func (es *EventService) UpdateEvent(ctx context.Context, event *espb.Event) (*espb.EventResponse, error) {
 
-	/* eid := event.Eventid
-	for idx, e := range es.Events {
-		if e.Eventid == eid {
-			es.Events[idx] = event
-			break
-		}
-	} */
-
 	return es.db.UpdateEvent(event)
 
-	//return &espb.EventResponse{Eventid: event.Eventid, Message: "Update Complete"}, nil
 }
 
 func (es *EventService) DeleteEvent(ctx context.Context, eid *espb.EventId) (*espb.EventResponse, error) {
@@ -93,8 +76,8 @@ func (es *EventService) DeleteEvent(ctx context.Context, eid *espb.EventId) (*es
 }
 
 
-func (es *EventService) OrderEventTicket(ctx context.Context, eid *espb.EventId) (*espb.EventResponse, error) {
+func (es *EventService) OrderEventTicket(ctx context.Context, eoq *espb.EventOrderRequest) (*espb.EventResponse, error) {
 	
-	return es.db.OrderEventTicket(eid)
+	return es.db.OrderEventTicket(eoq)
 }
 

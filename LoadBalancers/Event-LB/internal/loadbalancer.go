@@ -40,6 +40,14 @@ type EventJSON struct {
 	Seats        []string `json:"seats"`
 }
 
+type EventOrderJSON struct {
+	EventId      int32  `json:"eventid"`
+	Location     string `json:"location"`
+	TicketAmount int32  `json:"ticketamount"`
+	Date         string `json:"date"`
+	Seat         string `json:"seat"`
+}
+
 func NewLoadBalancer() *LoadBalancer {
 
 	return &LoadBalancer{
@@ -131,7 +139,6 @@ func (lb *LoadBalancer) GetGrpcClient() (espb.EventServiceClient, *grpc.ClientCo
 	if err != nil {
 		log.Printf("Failed to fetch a service")
 	}
-	//log.Println(service)
 	log.Printf("Picked: %s at %s", service.Name, service.Addr)
 
 	conn, err := grpc.NewClient(service.Grpcport, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -202,7 +209,6 @@ func (lb *LoadBalancer) UpdateEvent(w http.ResponseWriter, req *http.Request) {
 	w.Write(jsonres)
 }
 
-
 func (lb *LoadBalancer) DeleteEvent(w http.ResponseWriter, req *http.Request) {
 	client, conn := lb.GetGrpcClient()
 	defer conn.Close()
@@ -222,16 +228,11 @@ func (lb *LoadBalancer) DeleteEvent(w http.ResponseWriter, req *http.Request) {
 
 }
 
-
 func (lb *LoadBalancer) OrderTicketEvent(w http.ResponseWriter, req *http.Request) {
 	client, conn := lb.GetGrpcClient()
 	defer conn.Close()
 
-	vars := mux.Vars(req)
-	id := vars["id"]
-	eid, _ := strconv.ParseInt(id, 10, 32)
-
-	eventGrpcBody := &espb.EventId{Eventid: int32(eid)}
+	eventGrpcBody := lb.ReflectOrderEvent(req)
 	response, err := client.OrderEventTicket(context.Background(), eventGrpcBody)
 	if err != nil {
 		log.Fatalf("error while calling gRPC service: %v", err)
@@ -240,8 +241,6 @@ func (lb *LoadBalancer) OrderTicketEvent(w http.ResponseWriter, req *http.Reques
 	jsonres := lb.GrpctoHTTP(response)
 	w.Write(jsonres)
 }
-
-
 
 func (lb *LoadBalancer) ReflectHTTPCreateRequest(req *http.Request) *espb.EventCreateRequest {
 	body, err := io.ReadAll(req.Body)
@@ -290,6 +289,30 @@ func (lb *LoadBalancer) ReflectHTTPEvent(req *http.Request) *espb.Event {
 		Seats:        eventJSON.Seats,
 		Date:         eventJSON.Date,
 		Ticketamount: eventJSON.Ticketamount,
+	}
+
+	return eventGrpc
+}
+
+func (lb *LoadBalancer) ReflectOrderEvent(req *http.Request) *espb.EventOrderRequest {
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		log.Fatalln("Unable to read body")
+
+	}
+
+	var eventJSON EventOrderJSON
+	err = json.Unmarshal(body, &eventJSON)
+	if err != nil {
+		log.Fatalln("Unable to parse body")
+	}
+
+	eventGrpc := &espb.EventOrderRequest{
+		Eventid:  eventJSON.EventId,
+		Location: eventJSON.Location,
+		Seat:     eventJSON.Seat,
+		Date:     eventJSON.Date,
+		Amount:   eventJSON.TicketAmount,
 	}
 
 	return eventGrpc

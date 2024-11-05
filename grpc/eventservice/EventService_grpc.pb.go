@@ -36,7 +36,7 @@ type EventServiceClient interface {
 	GetEvent(ctx context.Context, in *EventId, opts ...grpc.CallOption) (*Event, error)
 	UpdateEvent(ctx context.Context, in *Event, opts ...grpc.CallOption) (*EventResponse, error)
 	DeleteEvent(ctx context.Context, in *EventId, opts ...grpc.CallOption) (*EventResponse, error)
-	OrderEventTicket(ctx context.Context, in *EventId, opts ...grpc.CallOption) (*EventResponse, error)
+	OrderEventTicket(ctx context.Context, in *EventOrderRequest, opts ...grpc.CallOption) (*EventResponse, error)
 }
 
 type eventServiceClient struct {
@@ -97,7 +97,7 @@ func (c *eventServiceClient) DeleteEvent(ctx context.Context, in *EventId, opts 
 	return out, nil
 }
 
-func (c *eventServiceClient) OrderEventTicket(ctx context.Context, in *EventId, opts ...grpc.CallOption) (*EventResponse, error) {
+func (c *eventServiceClient) OrderEventTicket(ctx context.Context, in *EventOrderRequest, opts ...grpc.CallOption) (*EventResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(EventResponse)
 	err := c.cc.Invoke(ctx, EventService_OrderEventTicket_FullMethodName, in, out, cOpts...)
@@ -116,7 +116,7 @@ type EventServiceServer interface {
 	GetEvent(context.Context, *EventId) (*Event, error)
 	UpdateEvent(context.Context, *Event) (*EventResponse, error)
 	DeleteEvent(context.Context, *EventId) (*EventResponse, error)
-	OrderEventTicket(context.Context, *EventId) (*EventResponse, error)
+	OrderEventTicket(context.Context, *EventOrderRequest) (*EventResponse, error)
 	mustEmbedUnimplementedEventServiceServer()
 }
 
@@ -142,7 +142,7 @@ func (UnimplementedEventServiceServer) UpdateEvent(context.Context, *Event) (*Ev
 func (UnimplementedEventServiceServer) DeleteEvent(context.Context, *EventId) (*EventResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteEvent not implemented")
 }
-func (UnimplementedEventServiceServer) OrderEventTicket(context.Context, *EventId) (*EventResponse, error) {
+func (UnimplementedEventServiceServer) OrderEventTicket(context.Context, *EventOrderRequest) (*EventResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OrderEventTicket not implemented")
 }
 func (UnimplementedEventServiceServer) mustEmbedUnimplementedEventServiceServer() {}
@@ -257,7 +257,7 @@ func _EventService_DeleteEvent_Handler(srv interface{}, ctx context.Context, dec
 }
 
 func _EventService_OrderEventTicket_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(EventId)
+	in := new(EventOrderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -269,7 +269,7 @@ func _EventService_OrderEventTicket_Handler(srv interface{}, ctx context.Context
 		FullMethod: EventService_OrderEventTicket_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EventServiceServer).OrderEventTicket(ctx, req.(*EventId))
+		return srv.(EventServiceServer).OrderEventTicket(ctx, req.(*EventOrderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

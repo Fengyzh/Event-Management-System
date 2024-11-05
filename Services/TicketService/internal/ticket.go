@@ -72,9 +72,4 @@ func (ts *TicketService) DeleteTicket(ctx context.Context, tid *tpb.TicketId) (*
 
 }
 
-//TODO
-/* func (ts *TicketService) OrderEventTicket(ctx context.Context, eid *espb.EventId) (*espb.EventResponse, error) {
-	
-	return ts.service.OrderEventTicket(eid)
-} */
 

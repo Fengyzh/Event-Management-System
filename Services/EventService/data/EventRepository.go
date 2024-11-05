@@ -14,6 +14,6 @@ type EventRepository interface {
 	CreateEvent(*espb.EventCreateRequest) (error)
 	UpdateEvent(*espb.Event) (*espb.EventResponse, error)
 	DeleteEvent(*espb.EventId) (*espb.EventResponse, error)
-	OrderTicketEvent(*espb.EventId) (*espb.EventResponse, error)
+	OrderTicketEvent(*espb.EventOrderRequest) (*espb.EventResponse, error)
 }
 

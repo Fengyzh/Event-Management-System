@@ -35,6 +35,6 @@ func (s *EventService) DeleteEvent(eid *espb.EventId) (*espb.EventResponse, erro
 	return s.repo.DeleteEvent(eid)
 }
 
-func (s *EventService) OrderEventTicket(eid *espb.EventId) (*espb.EventResponse, error) {
-	return s.repo.OrderTicketEvent(eid)
+func (s *EventService) OrderEventTicket(eoq *espb.EventOrderRequest) (*espb.EventResponse, error) {
+	return s.repo.OrderTicketEvent(eoq)
 }
